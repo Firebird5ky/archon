@@ -70,7 +70,7 @@ export default function Dashboard() {
     const m = loginMemberStr ? JSON.parse(loginMemberStr) : null
     if (m) {
       try {
-        await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: m.id, action: 'login' }) })
+        await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: String(m.id), action: 'login' }) })
       } catch(e) {}
     }
   }
@@ -178,7 +178,7 @@ export default function Dashboard() {
 
     // Award XP for posting
     try {
-      await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: member.id, action: 'post' }) })
+      await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: String(member.id), action: 'post' }) })
     } catch(e) {}
     setPostBody(''); setPostTitle(''); setPostMsg(''); setShowPost(false)
     loadPosts()
@@ -207,7 +207,7 @@ export default function Dashboard() {
     // Deduct XP directly
     const newXp = Math.max(0, (member.total_xp || 0) - 5)
     const newPosts = Math.max(0, (member.total_posts || 0) - 1)
-    await supabase.from('members').update({ total_xp: newXp, total_posts: newPosts }).eq('id', member.id)
+    await supabase.from('members').update({ total_xp: newXp, total_posts: newPosts }).eq('username', member.username)
     setMember({ ...member, total_xp: newXp, total_posts: newPosts })
     loadPosts()
   }
