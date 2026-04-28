@@ -14,6 +14,7 @@ export function createClient() {
         persistSession: true,
         detectSessionInUrl: true,
         storageKey: 'archon-auth',
+        autoRefreshToken: true,
       }
     }
   )
