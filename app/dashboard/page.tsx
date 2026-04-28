@@ -30,8 +30,8 @@ export default function Dashboard() {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user)
       if (data.user) {
-        const discordId = BigInt(data.user.user_metadata.provider_id)
-        const { data: m } = await supabase.from('members').select('*').eq('id', discordId).single()
+        const username = data.user.user_metadata.full_name || data.user.user_metadata.name || ''
+        const { data: m } = await supabase.from('members').select('*').eq('username', username).single()
         setMember(m)
         const { data: f } = await supabase.from('factions').select('*').eq('is_active', true).order('name')
         setFactions(f || [])
