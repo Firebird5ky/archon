@@ -65,6 +65,14 @@ export default function Dashboard() {
     const { data: f } = await supabase.from('factions').select('*').eq('is_active', true).order('name')
     setFactions(f || [])
     loadPosts()
+    // Daily login XP
+    const localMember = localStorage.getItem('archon-member')
+    const m = localMember ? JSON.parse(localMember) : null
+    if (m) {
+      try {
+        await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: m.id, action: 'login' }) })
+      } catch(e) {}
+    }
   }
 
   async function loadPosts() {
@@ -85,7 +93,7 @@ export default function Dashboard() {
       let mq = supabase.from('members').select('*').eq('is_banned', false)
       if (q) mq = mq.ilike('username', '%' + q + '%')
       const { data } = await mq.limit(8)
-      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '. XP: ' + m.total_xp + '.', tags: [m.tier], href: '/members/' + m.username }))
+      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '. XP: ' + m.total_xp + '.', tags: [m.tier] }))
     }
     if (t === 'all' || t === 'pages') {
       let pq = supabase.from('pages').select('*, factions(name)').eq('is_published', true)
@@ -168,6 +176,10 @@ export default function Dashboard() {
       if (error) { setPostMsg(error.message); return }
     }
 
+    // Award XP for posting
+    try {
+      await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: member.id, action: 'post' }) })
+    } catch(e) {}
     setPostBody(''); setPostTitle(''); setPostMsg(''); setShowPost(false)
     loadPosts()
   }
