@@ -1,83 +1,71 @@
 // @ts-nocheck
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
+    // Handle OAuth callback — Supabase detects the code in URL and sets session
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.push('/dashboard')
+      if (data.session) {
+        router.push('/dashboard')
+      } else {
+        setLoading(false)
+      }
     })
+
+    // Listen for auth state changes (catches OAuth redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        router.push('/dashboard')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        redirectTo: `${location.origin}/api/auth/callback`,
+        redirectTo: `${location.origin}/login`,
         scopes: 'identify email guilds',
       },
     })
   }
 
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', fontFamily: 'arial, sans-serif', color: 'var(--muted)' }}>
+      Authenticating...
+    </div>
+  )
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--bg)',
-      gap: '32px',
-    }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', gap: '32px' }}>
       <div style={{ textAlign: 'center' }}>
-        <h1 style={{
-          fontSize: '64px',
-          fontWeight: '700',
-          letterSpacing: '-2px',
-          fontFamily: 'arial, sans-serif',
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #3d2e00 40%, #c8960c 75%, #ffd700 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}>
+        <h1 style={{ fontSize: '64px', fontWeight: '700', letterSpacing: '-2px', fontFamily: 'arial, sans-serif', background: 'linear-gradient(180deg, #1a1a1a 0%, #3d2e00 40%, #c8960c 75%, #ffd700 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
           ARCHON
         </h1>
-        <p style={{ color: 'var(--muted)', marginTop: '8px', fontSize: '14px' }}>
+        <p style={{ color: 'var(--muted)', marginTop: '8px', fontSize: '14px', fontFamily: 'arial, sans-serif' }}>
           The faction network
         </p>
       </div>
 
-      <button
-        onClick={handleLogin}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '12px 24px',
-          border: '1px solid var(--border)',
-          borderRadius: '4px',
-          background: 'var(--bg)',
-          color: 'var(--text)',
-          fontSize: '14px',
-          cursor: 'pointer',
-          fontFamily: 'arial, sans-serif',
-        }}
-      >
+      <button onClick={handleLogin} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', border: '1px solid var(--border)', borderRadius: '4px', background: 'var(--bg)', color: 'var(--text)', fontSize: '14px', cursor: 'pointer', fontFamily: 'arial, sans-serif' }}>
         <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="#5865F2">
           <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
         </svg>
         Sign in with Discord
       </button>
 
-      <p style={{ color: 'var(--muted)', fontSize: '12px', maxWidth: '300px', textAlign: 'center' }}>
+      <p style={{ color: 'var(--muted)', fontSize: '12px', maxWidth: '300px', textAlign: 'center', fontFamily: 'arial, sans-serif' }}>
         Access is granted based on your Discord server membership and tier.
       </p>
     </div>
   )
 }
-
