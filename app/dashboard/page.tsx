@@ -323,21 +323,18 @@ export default function Dashboard() {
               )}
 
               {visiblePosts.map(p => (
-                <div key={p.id} style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{p.members?.username}</span>
-                    {p.faction_id && <span style={{ fontSize: '11px', color: '#4285f4' }}>{p.factions?.name}</span>}
-                    <span style={{ fontSize: '11px', padding: '1px 6px', border: '1px solid var(--border)', borderRadius: '8px', color: TIER_LIMITS[p.visibility]?.color || 'var(--muted)' }}>{TIER_LIMITS[p.visibility]?.label}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: 'auto' }}>{new Date(p.created_at).toLocaleDateString()}</span>
-                    {member && String(p.author_id) === String(member.id) && (
-                      <>
-                        <button onClick={() => startEdit(p)} style={btn('#4285f4', true)}>Edit</button>
-                        <button onClick={() => deletePost(p.id)} style={btn('#ea4335', true)}>Delete</button>
-                      </>
-                    )}
+                <div key={p.id} style={{ marginBottom: '28px' }}>
+                  <div style={{ fontSize: '12px', color: '#188038', marginBottom: '2px' }}>posts › {p.members?.username}{p.factions?.name ? ' › ' + p.factions.name : ''}</div>
+                  <Link href={'/posts/' + p.id} style={{ fontSize: '18px', color: '#1a0dab', textDecoration: 'none', display: 'block', marginBottom: '4px' }}>
+                    {p.title || 'Untitled post'}
+                  </Link>
+                  <div style={{ fontSize: '14px', color: 'var(--muted)', lineHeight: 1.6, marginBottom: '6px' }}>
+                    {p.body.substring(0, 160)}{p.body.length > 160 ? '...' : ''}
                   </div>
-                  {p.title && <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>{p.title}</div>}
-                  <div style={{ fontSize: '14px', color: 'var(--text)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{p.body}</div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', border: '1px solid var(--border)', borderRadius: '12px', color: TIER_LIMITS[p.visibility]?.color || 'var(--muted)' }}>{TIER_LIMITS[p.visibility]?.label}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
               ))}
               {visiblePosts.length === 0 && <p style={{ color: 'var(--muted)', fontSize: '14px' }}>No posts yet.</p>}
