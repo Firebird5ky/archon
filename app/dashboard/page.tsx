@@ -204,6 +204,10 @@ export default function Dashboard() {
   async function deletePost(id) {
     if (!confirm('Delete this post?')) return
     await supabase.from('posts').delete().eq('id', id)
+    // Deduct XP for deleted post
+    try {
+      await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: member.id, action: 'delete_post' }) })
+    } catch(e) {}
     loadPosts()
   }
 

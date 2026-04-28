@@ -63,6 +63,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updates.total_posts = (member.total_posts || 0) + 1
   }
 
+  if (action === 'delete_post') {
+    xpGain = -5
+    updates.total_posts = Math.max(0, (member.total_posts || 0) - 1)
+  }
+
   if (action === 'login') {
     const today = new Date().toISOString().split('T')[0]
     const lastLogin = member.last_login_date
@@ -80,8 +85,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updates.total_views = (member.total_views || 0) + 1
   }
 
-  if (xpGain > 0) {
-    const newXp = (member.total_xp || 0) + xpGain
+  if (xpGain !== 0) {
+    const newXp = Math.max(0, (member.total_xp || 0) + xpGain)
     const newLevel = calcLevel(newXp)
     updates.total_xp = newXp
     updates.level = newLevel
