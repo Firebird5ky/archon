@@ -66,8 +66,8 @@ export default function Dashboard() {
     setFactions(f || [])
     loadPosts()
     // Daily login XP
-    const localMember = localStorage.getItem('archon-member')
-    const m = localMember ? JSON.parse(localMember) : null
+    const loginMemberStr = localStorage.getItem('archon-member')
+    const m = loginMemberStr ? JSON.parse(loginMemberStr) : null
     if (m) {
       try {
         await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: m.id, action: 'login' }) })
