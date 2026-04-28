@@ -156,11 +156,12 @@ export default function Dashboard() {
       if (error) { setPostMsg(error.message); return }
       setEditPost(null)
     } else {
-      // Check weekly limit
+      // Check weekly limit - counts all posts created this week including deleted ones
       const weekNum = getWeekNumber()
       const yearNum = new Date().getFullYear()
-      const { count } = await supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', member.id).eq('week_number', weekNum).eq('year_number', yearNum)
-      if (limits.posts !== 999 && count >= limits.posts) { setPostMsg('Weekly post limit reached (' + limits.posts + '/week for ' + limits.label + ' tier)'); return }
+      const weekKey = 'archon_week_posts_' + member.username + '_' + yearNum + '_' + weekNum
+      const weekCount = parseInt(localStorage.getItem(weekKey) || '0')
+      if (limits.posts !== 999 && weekCount >= limits.posts) { setPostMsg('Weekly post limit reached (' + limits.posts + '/week for ' + limits.label + ' tier)'); return }
 
       const factionId = postFaction ? parseInt(postFaction) : null
       const { error } = await supabase.from('posts').insert({
@@ -180,6 +181,11 @@ export default function Dashboard() {
     try {
       await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: String(member.id), action: 'post' }) })
     } catch(e) {}
+    // Increment weekly post counter (persists even if post deleted)
+    const wk = getWeekNumber()
+    const yr = new Date().getFullYear()
+    const wkKey = 'archon_week_posts_' + member.username + '_' + yr + '_' + wk
+    localStorage.setItem(wkKey, String(parseInt(localStorage.getItem(wkKey) || '0') + 1))
     setPostBody(''); setPostTitle(''); setPostMsg(''); setShowPost(false)
     loadPosts()
   }
@@ -204,11 +210,7 @@ export default function Dashboard() {
   async function deletePost(id) {
     if (!confirm('Delete this post?')) return
     await supabase.from('posts').delete().eq('id', id)
-    // Deduct XP directly
-    const newXp = Math.max(0, (member.total_xp || 0) - 5)
-    const newPosts = Math.max(0, (member.total_posts || 0) - 1)
-    await supabase.from('members').update({ total_xp: newXp, total_posts: newPosts }).eq('username', member.username)
-    setMember({ ...member, total_xp: newXp, total_posts: newPosts })
+    // No XP deduction - weekly limit already counted this post
     loadPosts()
   }
 
