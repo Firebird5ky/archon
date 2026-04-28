@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [panelUser, setPanelUser] = useState('')
   const [panelPass, setPanelPass] = useState('')
   const [panelMsg, setPanelMsg] = useState('')
+  const [showGuide, setShowGuide] = useState(false)
   const [showPost, setShowPost] = useState(false)
   const [postBody, setPostBody] = useState('')
   const [postTitle, setPostTitle] = useState('')
@@ -392,6 +393,30 @@ export default function Dashboard() {
               <button onClick={() => setShowPanel(true)} style={{ ...btn(), width: '100%' }}>Login / Sign Up</button>
             </div>
           )}
+          <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowGuide(!showGuide)}>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>How ARCHON Works</span>
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{showGuide ? '▲' : '▼'}</span>
+            </div>
+            {showGuide && (
+              <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.7 }}>
+                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Welcome to ARCHON</p>
+                <p style={{ marginBottom: '8px' }}>ARCHON is a faction-based network. Join or watch factions compete, collaborate, and build their own spaces.</p>
+                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Tiers</p>
+                <div style={{ marginBottom: '6px' }}><span style={{ color: '#9aa0a6', fontWeight: 600 }}>Free</span> — Browse all public content. 3 posts/week, 2000 chars each.</div>
+                <div style={{ marginBottom: '6px' }}><span style={{ color: '#cd7f32', fontWeight: 600 }}>Bronze</span> — 6 posts/week, 4000 chars. Join up to 2 factions.</div>
+                <div style={{ marginBottom: '6px' }}><span style={{ color: '#aaa9ad', fontWeight: 600 }}>Silver</span> — 12 posts/week, 8000 chars. Priority build requests.</div>
+                <div style={{ marginBottom: '10px' }}><span style={{ color: '#ffd700', fontWeight: 600 }}>Gold</span> — Unlimited posts, 16000 chars. Full access.</div>
+                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Posting</p>
+                <p style={{ marginBottom: '8px' }}>Go to the Posts tab to create posts. You choose who can see each post — up to your own tier level. Your posts can be edited unlimited times.</p>
+                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Factions</p>
+                <p style={{ marginBottom: '8px' }}>Factions are groups led by Rulers. Each faction has its own space with pages and announcements. Click any faction to explore it.</p>
+                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Getting a Tier</p>
+                <p>Tiers are assigned by the admin. Contact a Ruler or Deity in the Discord server to request an upgrade.</p>
+              </div>
+            )}
+          </div>
+
           {factions.length > 0 && (
             <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 16px' }}>
               <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '8px' }}>Quick Links</div>
