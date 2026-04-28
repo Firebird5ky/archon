@@ -3,11 +3,22 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function LandingPage() {
   const [stats, setStats] = useState({ factions: 0, members: 0, posts: 0 })
   const [recentPosts, setRecentPosts] = useState([])
   const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect logged in users to dashboard
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.push('/dashboard')
+    })
+    const local = typeof window !== 'undefined' ? localStorage.getItem('archon-member') : null
+    if (local) router.push('/dashboard')
+  }, [])
 
   useEffect(() => {
     async function load() {
