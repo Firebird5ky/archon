@@ -17,7 +17,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: `${location.origin}/api/auth/callback`,
         scopes: 'identify email guilds',
       },
     })
