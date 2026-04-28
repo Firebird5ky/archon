@@ -93,7 +93,7 @@ export default function Dashboard() {
       let mq = supabase.from('members').select('*').eq('is_banned', false)
       if (q) mq = mq.ilike('username', '%' + q + '%')
       const { data } = await mq.limit(8)
-      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '. XP: ' + m.total_xp + '.', tags: [m.tier] }))
+      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '. XP: ' + m.total_xp + '.', tags: [m.tier], href: '/members/' + m.username }))
     }
     if (t === 'all' || t === 'pages') {
       let pq = supabase.from('pages').select('*, factions(name)').eq('is_published', true)
