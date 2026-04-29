@@ -76,24 +76,35 @@ export default function Dashboard() {
   async function search(q, t) {
     setLoading(true)
     const res = []
+
     if (t === 'all' || t === 'factions') {
       let fq = supabase.from('factions').select('*').eq('is_active', true)
       if (q) fq = fq.ilike('name', '%' + q + '%')
       const { data } = await fq.limit(8)
       data?.forEach(f => res.push({ type: 'faction', title: f.name + ' — Faction', path: ['factions', f.name], snippet: f.description || '[' + f.tag + ']', tags: [f.tag], href: '/f/' + f.name }))
     }
+
     if (t === 'all' || t === 'members') {
       let mq = supabase.from('members').select('*').eq('is_banned', false)
       if (q) mq = mq.ilike('username', '%' + q + '%')
       const { data } = await mq.limit(8)
-      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '. XP: ' + m.total_xp + '.', tags: [m.tier], href: '/members/' + m.username }))
+      data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '.', tags: [m.tier], href: '/members/' + m.username }))
     }
+
     if (t === 'all' || t === 'pages') {
       let pq = supabase.from('pages').select('*, factions(name)').eq('is_published', true)
       if (q) pq = pq.ilike('title', '%' + q + '%')
       const { data } = await pq.limit(8)
       data?.forEach(p => res.push({ type: 'page', title: p.title, path: ['factions', p.factions?.name, p.slug].filter(Boolean), snippet: p.body.substring(0, 160), tags: [p.factions?.name].filter(Boolean), href: '/f/' + p.factions?.name + '/' + p.slug }))
     }
+
+    if (t === 'all' || t === 'posts') {
+      let pq = supabase.from('posts').select('*, members(username), factions(name)').order('created_at', { ascending: false })
+      if (q) pq = pq.or('title.ilike.%' + q + '%,body.ilike.%' + q + '%')
+      const { data } = await pq.limit(8)
+      data?.forEach(p => res.push({ type: 'post', title: p.title || 'Untitled post', path: ['posts', p.members?.username].filter(Boolean), snippet: p.body.substring(0, 160) + (p.body.length > 160 ? '...' : ''), tags: [p.factions?.name].filter(Boolean), href: '/posts/' + p.id }))
+    }
+
     setResults(res)
     setLoading(false)
   }
