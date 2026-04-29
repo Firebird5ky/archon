@@ -65,14 +65,7 @@ export default function Dashboard() {
     const { data: f } = await supabase.from('factions').select('*').eq('is_active', true).order('name')
     setFactions(f || [])
     loadPosts()
-    // Daily login XP
-    const loginMemberStr = localStorage.getItem('archon-member')
-    const m = loginMemberStr ? JSON.parse(loginMemberStr) : null
-    if (m) {
-      try {
-        await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: String(m.id), action: 'login' }) })
-      } catch(e) {}
-    }
+
   }
 
   async function loadPosts() {
@@ -156,12 +149,11 @@ export default function Dashboard() {
       if (error) { setPostMsg(error.message); return }
       setEditPost(null)
     } else {
-      // Check weekly limit - counts all posts created this week including deleted ones
+      // Check weekly limit using database (counts actual existing posts)
       const weekNum = getWeekNumber()
       const yearNum = new Date().getFullYear()
-      const weekKey = 'archon_week_posts_' + member.username + '_' + yearNum + '_' + weekNum
-      const weekCount = parseInt(localStorage.getItem(weekKey) || '0')
-      if (limits.posts !== 999 && weekCount >= limits.posts) { setPostMsg('Weekly post limit reached (' + limits.posts + '/week for ' + limits.label + ' tier)'); return }
+      const { count } = await supabase.from('posts').select('*', { count: 'exact', head: true }).eq('author_id', member.id).eq('week_number', weekNum).eq('year_number', yearNum)
+      if (limits.posts !== 999 && count >= limits.posts) { setPostMsg('Weekly post limit reached (' + limits.posts + '/week for ' + limits.label + ' tier)'); return }
 
       const factionId = postFaction ? parseInt(postFaction) : null
       const { error } = await supabase.from('posts').insert({
@@ -177,11 +169,7 @@ export default function Dashboard() {
       if (error) { setPostMsg(error.message); return }
     }
 
-    // Award XP for posting
-    try {
-      await fetch('/api/xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: String(member.id), action: 'post' }) })
-    } catch(e) {}
-    // Increment weekly post counter (persists even if post deleted)
+    // Increment weekly post counter
     const wk = getWeekNumber()
     const yr = new Date().getFullYear()
     const wkKey = 'archon_week_posts_' + member.username + '_' + yr + '_' + wk
@@ -210,7 +198,12 @@ export default function Dashboard() {
   async function deletePost(id) {
     if (!confirm('Delete this post?')) return
     await supabase.from('posts').delete().eq('id', id)
-    // No XP deduction - weekly limit already counted this post
+    // Restore weekly post count
+    const delWk = getWeekNumber()
+    const delYr = new Date().getFullYear()
+    const delKey = 'archon_week_posts_' + member.username + '_' + delYr + '_' + delWk
+    const current = parseInt(localStorage.getItem(delKey) || '0')
+    if (current > 0) localStorage.setItem(delKey, String(current - 1))
     loadPosts()
   }
 
