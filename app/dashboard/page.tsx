@@ -261,7 +261,7 @@ export default function Dashboard() {
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
         <span style={{ fontSize: '22px', fontWeight: 700, background: 'linear-gradient(180deg,#1a1a1a 0%,#c8960c 75%,#ffd700 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', flexShrink: 0 }}>ARCHON</span>
-        <div style={{ flex: 1, maxWidth: '580px' }}>
+        <div style={{ flex: 1, maxWidth: '720px' }}>
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search factions, members, pages..." style={{ ...inp, borderRadius: '24px', width: '100%' }} />
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -371,8 +371,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div style={{ display: 'flex', padding: '16px 24px', gap: '32px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', padding: '16px 48px', gap: '48px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: '760px' }}>
 
           {/* Posts tab */}
           {tab === 'posts' && (
@@ -466,7 +466,7 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar */}
-        <div style={{ width: '240px', flexShrink: 0 }}>
+        <div style={{ width: '300px', flexShrink: 0 }}>
           <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)' }}>Network</div>
