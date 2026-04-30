@@ -415,6 +415,12 @@ function RequestCard({ request, onUpdate }) {
 
 
 function TicketCard({ ticket, onReply, adminName, supabase }) {
+  async function deleteTicket() {
+    if (!confirm('Delete ticket #' + ticket.id + '?')) return
+    await supabase.from('ticket_messages').delete().eq('ticket_id', ticket.id)
+    await supabase.from('tickets').delete().eq('id', ticket.id)
+    onReply()
+  }
   const [messages, setMessages] = useState([])
   const [reply, setReply] = useState('')
   const [status, setStatus] = useState(ticket.status)
@@ -476,10 +482,13 @@ function TicketCard({ ticket, onReply, adminName, supabase }) {
             <option value="closed">Closed</option>
           </select>
           <button style={btn('#4285f4')} onClick={sendReply}>Send</button>
+          <button style={btn('#ea4335')} onClick={deleteTicket}>Delete</button>
         </div>
       </div>
     </div>
   )
 }
+
+
 
 

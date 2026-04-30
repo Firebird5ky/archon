@@ -46,7 +46,7 @@ export default function TicketsPage() {
     if (!m) { router.push('/login'); return }
     setMember(m)
 
-    const { data: t } = await supabase.from('tickets').select('*').eq('member_id', m.id).order('created_at', { ascending: false }).limit(1).single()
+    const { data: t } = await supabase.from('tickets').select('*').eq('member_id', m.id).eq('archived', false).order('created_at', { ascending: false }).limit(1).single()
     setTicket(t || null)
 
     if (t) {
@@ -71,6 +71,13 @@ export default function TicketsPage() {
     })
     setTitle(''); setBody(''); setShowForm(false); setMsg('')
     load()
+  }
+
+  async function archiveTicket() {
+    if (!confirm('Archive this ticket? You can then open a new one.')) return
+    await supabase.from('tickets').update({ archived: true }).eq('id', ticket.id)
+    setTicket(null)
+    setMessages([])
   }
 
   async function sendReply() {
@@ -182,9 +189,10 @@ export default function TicketsPage() {
                 <button onClick={sendReply} style={{ ...btn(), alignSelf: 'flex-end', whiteSpace: 'nowrap' }}>Send</button>
               </div>
             )}
-            {ticket.status === 'closed' && (
-              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', fontSize: '13px', color: 'var(--muted)', textAlign: 'center' }}>
-                This ticket is closed. {canOpenNew && <button onClick={() => setShowForm(true)} style={{ color: '#4285f4', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>Open a new ticket</button>}
+            {(ticket.status === 'closed' || ticket.status === 'resolved') && (
+              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', fontSize: '13px', color: 'var(--muted)', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
+                <span>Ticket {ticket.status}.</span>
+                <button onClick={archiveTicket} style={{ color: '#9aa0a6', background: 'none', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', padding: '4px 10px' }}>Archive & Open New</button>
               </div>
             )}
           </div>
