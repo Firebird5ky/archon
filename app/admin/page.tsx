@@ -167,7 +167,7 @@ export default function AdminPage() {
       <StorageBar supabase={supabase} />
 
       <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-        {(isDeity ? ['factions', 'members', 'rulers', 'requests', 'posts', 'comments'] : ['members', 'posts', 'comments']).map(t => (
+        {(isDeity ? ['factions', 'members', 'rulers', 'requests', 'posts', 'comments', 'tickets'] : ['members', 'posts', 'comments', 'tickets']).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab===t ? '3px solid #4285f4' : '3px solid transparent', color: tab===t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', fontFamily: 'arial, sans-serif', textTransform: 'capitalize' }}>{t}</button>
         ))}
         {!isDeity && <span style={{ marginLeft: '12px', fontSize: '12px', padding: '2px 8px', background: '#f1f3f4', color: 'var(--muted)', borderRadius: '4px' }}>Admin — limited access</span>}
@@ -438,4 +438,6 @@ function TicketCard({ ticket, onReply, adminName }) {
     </div>
   )
 }
+
+
 
