@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [requests, setRequests] = useState([])
   const [allPosts, setAllPosts] = useState([])
   const [allComments, setAllComments] = useState([])
+  const [tickets, setTickets] = useState([])
   const [fName, setFName] = useState('')
   const [fTag, setFTag] = useState('')
   const [fDesc, setFDesc] = useState('')
@@ -52,18 +53,20 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    const [f, m, r, p, c] = await Promise.all([
+    const [f, m, r, p, c, tk] = await Promise.all([
       supabase.from('factions').select('*').order('created_at'),
       supabase.from('members').select('*').order('joined_at', { ascending: false }),
       supabase.from('build_requests').select('*, members(username)').order('created_at', { ascending: false }),
       supabase.from('posts').select('*, members(username)').order('created_at', { ascending: false }).limit(50),
       supabase.from('comments').select('*, members(username), posts(title)').order('created_at', { ascending: false }).limit(50),
+      supabase.from('tickets').select('*, members(username)').order('created_at', { ascending: false }),
     ])
     setFactions(f.data || [])
     setMembers(m.data || [])
     setRequests(r.data || [])
     setAllPosts(p.data || [])
     setAllComments(c.data || [])
+    setTickets(tk.data || [])
   }
 
   async function createFaction() {
@@ -121,6 +124,11 @@ export default function AdminPage() {
   async function adminDeleteComment(id) {
     if (!confirm('Delete this comment?')) return
     await supabase.from('comments').update({ is_deleted: true, body: '' }).eq('id', id)
+    loadAll()
+  }
+
+  async function replyTicket(id, reply, status, adminName) {
+    await supabase.from('tickets').update({ admin_reply: reply, replied_by: adminName, status, updated_at: new Date().toISOString() }).eq('id', id)
     loadAll()
   }
 
@@ -271,6 +279,14 @@ export default function AdminPage() {
           </>
         )}
 
+        {tab === 'tickets' && (
+          <>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>Tickets ({tickets.length})</h2>
+            {tickets.length === 0 && <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No tickets.</p>}
+            {tickets.map(t => <TicketCard key={t.id} ticket={t} onReply={replyTicket} adminName={isDeity ? 'archon_admin' : (adminMember?.username || 'admin')} />)}
+          </>
+        )}
+
         {tab === 'comments' && (
           <>
             <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>All Comments ({allComments.length})</h2>
@@ -386,6 +402,38 @@ function RequestCard({ request, onUpdate }) {
         <button style={btn('#4285f4')} onClick={() => onUpdate(request.id, 'in_progress', response)}>In Progress</button>
         <button style={btn('#fbbc05')} onClick={() => onUpdate(request.id, 'done', response)}>Done</button>
         <button style={btn('#ea4335')} onClick={() => onUpdate(request.id, 'rejected', response)}>Reject</button>
+      </div>
+    </div>
+  )
+}
+
+
+// Add this component to the bottom of app/admin/page.tsx before the last closing line
+function TicketCard({ ticket, onReply, adminName }) {
+  const [reply, setReply] = useState(ticket.admin_reply || '')
+  const [status, setStatus] = useState(ticket.status)
+  const STATUS_COLORS = { open: '#4285f4', 'in-progress': '#fbbc05', resolved: '#34a853', closed: '#9aa0a6' }
+  const inp = { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'arial, sans-serif', width: '100%' }
+  const btn = (bg) => ({ padding: '6px 12px', background: bg, color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' })
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>#{ticket.id} — {ticket.title}</span>
+        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: STATUS_COLORS[ticket.status] + '22', color: STATUS_COLORS[ticket.status], border: '1px solid ' + STATUS_COLORS[ticket.status] }}>{ticket.status}</span>
+        <span style={{ fontSize: '11px', padding: '2px 8px', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--muted)' }}>{ticket.category}</span>
+      </div>
+      <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>From: {ticket.members?.username} · {new Date(ticket.created_at).toLocaleDateString()}</div>
+      <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.6, marginBottom: '12px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>{ticket.body}</div>
+      <textarea value={reply} onChange={e => setReply(e.target.value)} placeholder="Write a reply..." style={{ ...inp, minHeight: '80px', resize: 'vertical', marginBottom: '8px' }} />
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        <button style={btn('#4285f4')} onClick={() => onReply(ticket.id, reply, status, adminName)}>Send Reply</button>
       </div>
     </div>
   )
