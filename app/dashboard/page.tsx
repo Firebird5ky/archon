@@ -486,6 +486,12 @@ export default function Dashboard() {
               <button onClick={() => setShowPanel(true)} style={{ ...btn(), width: '100%' }}>Login / Sign Up</button>
             </div>
           )}
+          {member && (
+            <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '8px' }}>Support</div>
+              <Link href="/tickets" style={{ display: 'block', fontSize: '13px', color: '#4285f4', textDecoration: 'none', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>🎫 My Ticket</Link>
+            </div>
+          )}
           <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowGuide(!showGuide)}>
               <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>How ARCHON Works</span>
