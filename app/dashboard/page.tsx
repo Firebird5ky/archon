@@ -493,19 +493,35 @@ export default function Dashboard() {
             </div>
             {showGuide && (
               <div style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--muted)', lineHeight: 1.7 }}>
-                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Welcome to ARCHON</p>
-                <p style={{ marginBottom: '8px' }}>ARCHON is a faction-based network. Join or watch factions compete, collaborate, and build their own spaces.</p>
-                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Tiers</p>
-                <div style={{ marginBottom: '6px' }}><span style={{ color: '#9aa0a6', fontWeight: 600 }}>Free</span> — Browse all public content. 3 posts/week, 2000 chars each.</div>
-                <div style={{ marginBottom: '6px' }}><span style={{ color: '#cd7f32', fontWeight: 600 }}>Bronze</span> — 6 posts/week, 4000 chars. Join up to 2 factions.</div>
-                <div style={{ marginBottom: '6px' }}><span style={{ color: '#aaa9ad', fontWeight: 600 }}>Silver</span> — 12 posts/week, 8000 chars. Priority build requests.</div>
-                <div style={{ marginBottom: '10px' }}><span style={{ color: '#ffd700', fontWeight: 600 }}>Gold</span> — Unlimited posts, 16000 chars. Full access.</div>
-                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Posting</p>
-                <p style={{ marginBottom: '8px' }}>Go to the Posts tab to create posts. You choose who can see each post — up to your own tier level. Your posts can be edited unlimited times.</p>
-                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Factions</p>
-                <p style={{ marginBottom: '8px' }}>Factions are groups led by Rulers. Each faction has its own space with pages and announcements. Click any faction to explore it.</p>
-                <p style={{ marginBottom: '10px', color: 'var(--text)', fontWeight: 500 }}>Getting a Tier</p>
-                <p>Tiers are assigned by the admin. Contact a Ruler or Deity in the Discord server to request an upgrade.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Welcome to ARCHON</p>
+                <p style={{ marginBottom: '14px' }}>A faction-based network built on the Discord community. Browse freely, earn your place, and rise through the ranks.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Tiers</p>
+                <div style={{ marginBottom: '4px' }}><span style={{ color: '#9aa0a6', fontWeight: 600 }}>Free</span> — Browse public content. 3 posts/week, 2000 chars per post.</div>
+                <div style={{ marginBottom: '4px' }}><span style={{ color: '#cd7f32', fontWeight: 600 }}>Bronze</span> — 6 posts/week, 4000 chars.</div>
+                <div style={{ marginBottom: '4px' }}><span style={{ color: '#aaa9ad', fontWeight: 600 }}>Silver</span> — 12 posts/week, 8000 chars.</div>
+                <div style={{ marginBottom: '4px' }}><span style={{ color: '#ffd700', fontWeight: 600 }}>Gold</span> — 24 posts/week, 16000 chars.</div>
+                <div style={{ marginBottom: '14px' }}><span style={{ color: '#e5e4e2', fontWeight: 600 }}>Platinum</span> — 48 posts/week, 32000 chars. Maximum access.</div>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Posting</p>
+                <p style={{ marginBottom: '4px' }}>Go to the <strong>Posts</strong> tab and click <strong>+ New Post</strong>. You must be logged in.</p>
+                <p style={{ marginBottom: '4px' }}>Choose who can see your post — up to your own tier. Deleting a post uses up your weekly slot.</p>
+                <p style={{ marginBottom: '4px' }}>You can edit your own posts unlimited times. Others cannot edit yours.</p>
+                <p style={{ marginBottom: '14px' }}>Paste a YouTube link, image URL (.jpg/.png/.gif), or direct .mp4 link on its own line to embed media.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Comments</p>
+                <p style={{ marginBottom: '14px' }}>Anyone with an account can comment on posts. Replies are threaded. You can only delete your own comments.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Factions</p>
+                <p style={{ marginBottom: '14px' }}>Factions are groups led by Rulers appointed by the Deity. Each faction has its own space with pages and announcements. Click any faction name to explore it.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Profiles</p>
+                <p style={{ marginBottom: '14px' }}>Click any member name to view their profile — posts, faction, tier, and stats are all visible.</p>
+
+                <p style={{ marginBottom: '6px', color: 'var(--text)', fontWeight: 600 }}>Upgrading Your Tier</p>
+                <p>Tiers are assigned manually. Support the server on <strong>Ko-fi</strong> and contact a Ruler or admin in Discord to have your tier upgraded.</p>
+
               </div>
             )}
           </div>
