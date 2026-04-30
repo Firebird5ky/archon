@@ -179,7 +179,7 @@ export default function AdminPage() {
                         <option value="free">Free</option>
                         <option value="bronze">Bronze</option>
                         <option value="silver">Silver</option>
-                        <option value="gold">Gold</option>
+                        <option value="gold">Gold</option>`n                        <option value="platinum">Platinum</option>
                       </select>
                     </td>
                     <td style={td}>
@@ -320,3 +320,4 @@ function RequestCard({ request, onUpdate }) {
     </div>
   )
 }
+
