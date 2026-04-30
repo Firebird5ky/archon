@@ -126,6 +126,8 @@ export default function AdminPage() {
         <button onClick={() => router.push('/dashboard')} style={{ marginLeft: 'auto', fontSize: '13px', color: '#4285f4', background: 'none', border: 'none', cursor: 'pointer' }}>Dashboard</button>
       </div>
 
+      <StorageBar supabase={supabase} />
+
       <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
         {(isDeity ? ['factions', 'members', 'rulers', 'requests'] : ['members']).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab===t ? '3px solid #4285f4' : '3px solid transparent', color: tab===t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', fontFamily: 'arial, sans-serif', textTransform: 'capitalize' }}>{t}</button>
@@ -217,6 +219,58 @@ export default function AdminPage() {
             {requests.map(r => <RequestCard key={r.id} request={r} onUpdate={updateRequest} />)}
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
+function StorageBar({ supabase }) {
+  const [usage, setUsage] = useState(null)
+
+  useEffect(() => {
+    async function load() {
+      // Get row counts from all tables
+      const tables = ['members', 'factions', 'posts', 'pages', 'comments', 'faction_members', 'rulers', 'build_requests', 'activity_log', 'transactions', 'page_links', 'permissions']
+      let totalRows = 0
+      let tableData = []
+
+      for (const table of tables) {
+        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true })
+        totalRows += count || 0
+        tableData.push({ name: table, count: count || 0 })
+      }
+
+      // Estimate storage: average ~2KB per row
+      const estimatedMB = (totalRows * 2) / 1024
+      const limitMB = 500
+      const pct = Math.min((estimatedMB / limitMB) * 100, 100)
+
+      setUsage({ estimatedMB, limitMB, pct, totalRows, tableData: tableData.sort((a,b) => b.count - a.count) })
+    }
+    load()
+  }, [])
+
+  if (!usage) return null
+
+  const color = usage.pct > 80 ? '#ea4335' : usage.pct > 50 ? '#fbbc05' : '#34a853'
+
+  return (
+    <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>Database Storage</span>
+        <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          ~{usage.estimatedMB.toFixed(2)} MB / {usage.limitMB} MB free tier · {usage.totalRows.toLocaleString()} total rows
+        </span>
+      </div>
+      <div style={{ height: '8px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
+        <div style={{ height: '100%', width: usage.pct + '%', background: color, borderRadius: '4px', transition: 'width 0.5s' }} />
+      </div>
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+        {usage.tableData.filter(t => t.count > 0).map(t => (
+          <span key={t.name} style={{ fontSize: '11px', color: 'var(--muted)' }}>
+            {t.name}: <strong style={{ color: 'var(--text)' }}>{t.count}</strong>
+          </span>
+        ))}
       </div>
     </div>
   )
