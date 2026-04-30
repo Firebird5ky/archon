@@ -6,11 +6,10 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 
 const TIER_LIMITS = {
-  free:     { chars: 2000,  label: 'Free',     color: '#9aa0a6' },
-  bronze:   { chars: 4000,  label: 'Bronze',   color: '#cd7f32' },
-  silver:   { chars: 8000,  label: 'Silver',   color: '#aaa9ad' },
-  gold:     { chars: 16000, label: 'Gold',     color: '#ffd700' },
-  platinum: { chars: 32000, label: 'Platinum', color: '#e5e4e2' },
+  free:   { chars: 2000, label: 'Free',   color: '#9aa0a6' },
+  bronze: { chars: 4000, label: 'Bronze', color: '#cd7f32' },
+  silver: { chars: 8000, label: 'Silver', color: '#aaa9ad' },
+  gold:   { chars: 16000,label: 'Gold',   color: '#ffd700' },
 }
 
 function timeAgo(date) {
@@ -19,6 +18,88 @@ function timeAgo(date) {
   if (s < 3600) return Math.floor(s/60) + 'm ago'
   if (s < 86400) return Math.floor(s/3600) + 'h ago'
   return Math.floor(s/86400) + 'd ago'
+}
+
+function renderBody(text) {
+  if (!text) return null
+  const lines = text.split('\n')
+  const elements = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+
+    // YouTube
+    const ytMatch = line.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/)
+    if (ytMatch) {
+      elements.push(
+        <div key={i} style={{ marginBottom: '12px', borderRadius: '8px', overflow: 'hidden', maxWidth: '560px' }}>
+          <iframe
+            width="560" height="315"
+            src={'https://www.youtube.com/embed/' + ytMatch[1]}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ maxWidth: '100%' }}
+          />
+        </div>
+      )
+      continue
+    }
+
+    // Vimeo
+    const vimeoMatch = line.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/)
+    if (vimeoMatch) {
+      elements.push(
+        <div key={i} style={{ marginBottom: '12px', borderRadius: '8px', overflow: 'hidden', maxWidth: '560px' }}>
+          <iframe
+            width="560" height="315"
+            src={'https://player.vimeo.com/video/' + vimeoMatch[1]}
+            frameBorder="0"
+            allowFullScreen
+            style={{ maxWidth: '100%' }}
+          />
+        </div>
+      )
+      continue
+    }
+
+    // Direct video
+    if (line.match(/^https?:\/\/.+\.mp4(\?.*)?$/i)) {
+      elements.push(
+        <video key={i} controls style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }}>
+          <source src={line} type="video/mp4" />
+        </video>
+      )
+      continue
+    }
+
+    // Image
+    if (line.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) {
+      elements.push(
+        <div key={i} style={{ marginBottom: '12px' }}>
+          <img src={line} alt="" style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: '8px', display: 'block', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none' }} />
+        </div>
+      )
+      continue
+    }
+
+    // Plain URL
+    if (line.match(/^https?:\/\//)) {
+      elements.push(
+        <div key={i} style={{ marginBottom: '4px' }}>
+          <a href={line} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--link)', wordBreak: 'break-all' }}>{line}</a>
+        </div>
+      )
+      continue
+    }
+
+    // Regular text line
+    elements.push(
+      <p key={i} style={{ marginBottom: line === '' ? '8px' : '4px', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{line}</p>
+    )
+  }
+
+  return <div style={{ fontSize: '15px', color: 'var(--text)' }}>{elements}</div>
 }
 
 function CommentNode({ comment, allComments, member, onReply, onDelete, depth = 0 }) {
@@ -184,7 +265,7 @@ export default function PostPage() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', color: editBody.length > memberTier.chars ? '#ea4335' : 'var(--muted)' }}>{editBody.length}/{memberTier.chars}</span>
               <select value={editVisibility} onChange={e => setEditVisibility(e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
-                {['free','bronze','silver','gold','platinum'].slice(0, ['free','bronze','silver','gold','platinum'].indexOf(member?.tier) + 1).map(t => (
+                {['free','bronze','silver','gold'].slice(0, ['free','bronze','silver','gold'].indexOf(member?.tier) + 1).map(t => (
                   <option key={t} value={t}>{TIER_LIMITS[t].label} visible</option>
                 ))}
               </select>
@@ -209,7 +290,7 @@ export default function PostPage() {
                 </div>
               )}
             </div>
-            <div style={{ fontSize: '15px', color: 'var(--text)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: '40px' }}>{post.body}</div>
+            <div style={{ marginBottom: '40px' }}>{renderBody(post.body)}</div>
           </>
         )}
 
