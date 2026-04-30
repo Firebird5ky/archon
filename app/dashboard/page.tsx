@@ -259,7 +259,7 @@ export default function Dashboard() {
   return (
     <div style={{ fontFamily: 'arial, sans-serif', minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '12px 24px', borderBottom: '1px solid var(--border)' }}>
         <span style={{ fontSize: '22px', fontWeight: 700, background: 'linear-gradient(180deg,#1a1a1a 0%,#c8960c 75%,#ffd700 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', flexShrink: 0 }}>ARCHON</span>
         <div style={{ flex: 1, maxWidth: '720px' }}>
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search factions, members, pages..." style={{ ...inp, borderRadius: '24px', width: '100%' }} />
@@ -323,7 +323,7 @@ export default function Dashboard() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+      <div style={{ display: 'flex', padding: '0 0 0 160px', borderBottom: '1px solid var(--border)', alignItems: 'center', paddingRight: '24px' }}>
         {['all', 'factions', 'members', 'pages', 'posts'].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab === t ? '3px solid #4285f4' : '3px solid transparent', color: tab === t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'arial, sans-serif' }}>{t}</button>
         ))}
@@ -335,7 +335,7 @@ export default function Dashboard() {
       </div>
 
       {showFilters && tab === 'all' && (
-        <div style={{ padding: '12px 24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ padding: '12px 24px 12px 160px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             placeholder="Author"
             value={filterAuthor}
@@ -371,8 +371,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div style={{ display: 'flex', padding: '16px 48px', gap: '48px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-        <div style={{ flex: 1, minWidth: 0, maxWidth: '760px' }}>
+      <div style={{ display: 'flex', padding: '16px 24px 16px 160px', gap: '48px', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: '600px' }}>
 
           {/* Posts tab */}
           {tab === 'posts' && (
@@ -466,7 +466,7 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar */}
-        <div style={{ width: '300px', flexShrink: 0 }}>
+        <div style={{ width: '300px', flexShrink: 0, marginLeft: 'auto' }}>
           <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)' }}>Network</div>
