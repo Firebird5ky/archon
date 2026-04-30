@@ -18,6 +18,8 @@ export default function AdminPage() {
   const [factions, setFactions] = useState([])
   const [members, setMembers] = useState([])
   const [requests, setRequests] = useState([])
+  const [allPosts, setAllPosts] = useState([])
+  const [allComments, setAllComments] = useState([])
   const [fName, setFName] = useState('')
   const [fTag, setFTag] = useState('')
   const [fDesc, setFDesc] = useState('')
@@ -50,14 +52,18 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    const [f, m, r] = await Promise.all([
+    const [f, m, r, p, c] = await Promise.all([
       supabase.from('factions').select('*').order('created_at'),
       supabase.from('members').select('*').order('joined_at', { ascending: false }),
       supabase.from('build_requests').select('*, members(username)').order('created_at', { ascending: false }),
+      supabase.from('posts').select('*, members(username)').order('created_at', { ascending: false }).limit(50),
+      supabase.from('comments').select('*, members(username), posts(title)').order('created_at', { ascending: false }).limit(50),
     ])
     setFactions(f.data || [])
     setMembers(m.data || [])
     setRequests(r.data || [])
+    setAllPosts(p.data || [])
+    setAllComments(c.data || [])
   }
 
   async function createFaction() {
@@ -106,6 +112,18 @@ export default function AdminPage() {
     loadAll()
   }
 
+  async function adminDeletePost(id) {
+    if (!confirm('Delete this post?')) return
+    await supabase.from('posts').delete().eq('id', id)
+    loadAll()
+  }
+
+  async function adminDeleteComment(id) {
+    if (!confirm('Delete this comment?')) return
+    await supabase.from('comments').update({ is_deleted: true, body: '' }).eq('id', id)
+    loadAll()
+  }
+
   async function assignRuler(memberId, factionId, title) {
     await supabase.from('rulers').upsert({ member_id: memberId, faction_id: parseInt(factionId), title, is_active: true }, { onConflict: 'member_id' })
     loadAll()
@@ -141,7 +159,7 @@ export default function AdminPage() {
       <StorageBar supabase={supabase} />
 
       <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-        {(isDeity ? ['factions', 'members', 'rulers', 'requests'] : ['members']).map(t => (
+        {(isDeity ? ['factions', 'members', 'rulers', 'requests', 'posts', 'comments'] : ['members', 'posts', 'comments']).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab===t ? '3px solid #4285f4' : '3px solid transparent', color: tab===t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', fontFamily: 'arial, sans-serif', textTransform: 'capitalize' }}>{t}</button>
         ))}
         {!isDeity && <span style={{ marginLeft: '12px', fontSize: '12px', padding: '2px 8px', background: '#f1f3f4', color: 'var(--muted)', borderRadius: '4px' }}>Admin — limited access</span>}
@@ -231,6 +249,44 @@ export default function AdminPage() {
             <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>Build Requests</h2>
             {requests.length === 0 && <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No requests.</p>}
             {requests.map(r => <RequestCard key={r.id} request={r} onUpdate={updateRequest} />)}
+          </>
+        )}
+
+        {tab === 'posts' && (
+          <>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>All Posts ({allPosts.length})</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={th}>Title</th><th style={th}>Author</th><th style={th}>Date</th><th style={th}>Actions</th></tr></thead>
+              <tbody>
+                {allPosts.map(p => (
+                  <tr key={p.id}>
+                    <td style={td}><a href={'/posts/' + p.id} target="_blank" style={{ color: 'var(--link)' }}>{p.title || 'Untitled'}</a></td>
+                    <td style={td}>{p.members?.username || '[deleted]'}</td>
+                    <td style={td}>{new Date(p.created_at).toLocaleDateString()}</td>
+                    <td style={td}><button style={btn('#ea4335')} onClick={() => adminDeletePost(p.id)}>Delete</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {tab === 'comments' && (
+          <>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>All Comments ({allComments.length})</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={th}>Comment</th><th style={th}>Author</th><th style={th}>Post</th><th style={th}>Actions</th></tr></thead>
+              <tbody>
+                {allComments.map(c => (
+                  <tr key={c.id}>
+                    <td style={td}>{c.is_deleted ? '[deleted]' : c.body?.substring(0, 60) + (c.body?.length > 60 ? '...' : '')}</td>
+                    <td style={td}>{c.members?.username || '[deleted]'}</td>
+                    <td style={td}><a href={'/posts/' + c.post_id} target="_blank" style={{ color: 'var(--link)' }}>{c.posts?.title || 'Post'}</a></td>
+                    <td style={td}>{!c.is_deleted && <button style={btn('#ea4335')} onClick={() => adminDeleteComment(c.id)}>Delete</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </>
         )}
       </div>
