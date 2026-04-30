@@ -4,14 +4,17 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
-const ADMIN_HASH = '$2a$12$mtlNobkrqQsmmAyt9mnfSOBFkje2X6aNRIuvWmMIVtzaT39Sy0ZOi'
+const DEITY_HASH = '$2a$12$mtlNobkrqQsmmAyt9mnfSOBFkje2X6aNRIuvWmMIVtzaT39Sy0ZOi'
+const DEITY_USERNAME = 'archon_admin'
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
+  const [isDeity, setIsDeity] = useState(false)
+  const [adminMember, setAdminMember] = useState(null)
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
   const [loginMsg, setLoginMsg] = useState('')
-  const [tab, setTab] = useState('factions')
+  const [tab, setTab] = useState('members')
   const [factions, setFactions] = useState([])
   const [members, setMembers] = useState([])
   const [requests, setRequests] = useState([])
@@ -28,10 +31,22 @@ export default function AdminPage() {
   }, [authed])
 
   async function handleAdminLogin() {
-    if (user !== 'archon_admin') { setLoginMsg('Invalid credentials'); return }
-    const res = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass, hash: ADMIN_HASH }) })
+    setLoginMsg('')
+    // Check deity login first
+    if (user === DEITY_USERNAME) {
+      const res = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass, hash: DEITY_HASH }) })
+      const { match } = await res.json()
+      if (match) { setAuthed(true); setIsDeity(true); return }
+      setLoginMsg('Invalid credentials'); return
+    }
+    // Check admin member login
+    const { data: m } = await supabase.from('members').select('*').eq('username', user).single()
+    if (!m || m.role !== 'admin') { setLoginMsg('Invalid credentials'); return }
+    if (!m.password_hash) { setLoginMsg('No password set for this account'); return }
+    const res = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass, hash: m.password_hash }) })
     const { match } = await res.json()
-    if (match) { setAuthed(true) } else { setLoginMsg('Invalid credentials') }
+    if (match) { setAuthed(true); setIsDeity(false); setAdminMember(m) }
+    else { setLoginMsg('Invalid credentials') }
   }
 
   async function loadAll() {
@@ -111,10 +126,11 @@ export default function AdminPage() {
         <button onClick={() => router.push('/dashboard')} style={{ marginLeft: 'auto', fontSize: '13px', color: '#4285f4', background: 'none', border: 'none', cursor: 'pointer' }}>Dashboard</button>
       </div>
 
-      <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)' }}>
-        {['factions', 'members', 'rulers', 'requests'].map(t => (
+      <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+        {(isDeity ? ['factions', 'members', 'rulers', 'requests'] : ['members']).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab===t ? '3px solid #4285f4' : '3px solid transparent', color: tab===t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', fontFamily: 'arial, sans-serif', textTransform: 'capitalize' }}>{t}</button>
         ))}
+        {!isDeity && <span style={{ marginLeft: '12px', fontSize: '12px', padding: '2px 8px', background: '#f1f3f4', color: 'var(--muted)', borderRadius: '4px' }}>Admin — limited access</span>}
       </div>
 
       <div style={{ padding: '24px', maxWidth: '960px' }}>
@@ -162,15 +178,19 @@ export default function AdminPage() {
                         <option value="bronze">Bronze</option>
                         <option value="silver">Silver</option>
                         <option value="gold">Gold</option>
-                        <option value="platinum">Platinum</option>
                       </select>
                     </td>
                     <td style={td}>
-                      <select style={sel} value={m.role} onChange={e => setRole(m.id, e.target.value)}>
-                        <option value="member">Member</option>
-                        <option value="ruler">Ruler</option>
-                        <option value="deity">Deity</option>
-                      </select>
+                      {isDeity ? (
+                        <select style={sel} value={m.role} onChange={e => setRole(m.id, e.target.value)}>
+                          <option value="member">Member</option>
+                          <option value="admin">Admin</option>
+                          <option value="ruler">Ruler</option>
+                          <option value="deity">Deity</option>
+                        </select>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{m.role}</span>
+                      )}
                     </td>
                     <td style={td}>
                       <button style={btn(m.is_banned ? '#34a853' : '#ea4335')} onClick={() => banMember(m.id, !m.is_banned)}>{m.is_banned ? 'Unban' : 'Ban'}</button>

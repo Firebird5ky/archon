@@ -247,6 +247,7 @@ export default function Dashboard() {
 
   const tier = member ? (TIER_LIMITS[member.tier] || TIER_LIMITS.free) : TIER_LIMITS.free
   const isDeity = member?.role === 'deity'
+  const isAdmin = member?.role === 'admin' || isDeity
   const visiblePosts = posts.filter(p => {
     const pTierIdx = TIER_ORDER.indexOf(p.visibility || 'free')
     const mTierIdx = member ? TIER_ORDER.indexOf(member.tier) : 0
@@ -268,7 +269,7 @@ export default function Dashboard() {
           {member ? (
             <>
               <button onClick={() => setShowTiers(!showTiers)} style={{ fontSize: '12px', padding: '3px 10px', border: '1px solid ' + tier.color, color: tier.color, background: 'none', borderRadius: '12px', cursor: 'pointer' }}>{tier.label}</button>
-              {isDeity && <Link href="/admin" style={{ fontSize: '12px', padding: '4px 10px', background: '#ea4335', color: '#fff', borderRadius: '4px', textDecoration: 'none' }}>Admin</Link>}
+              {(member?.role === 'deity' || member?.role === 'admin') && <Link href="/admin" style={{ fontSize: '12px', padding: '4px 10px', background: '#ea4335', color: '#fff', borderRadius: '4px', textDecoration: 'none' }}>Admin</Link>}
               <span style={{ fontSize: '13px', color: 'var(--muted)' }}>{member.username}</span>
               <button onClick={handleSignOut} style={{ fontSize: '13px', color: '#4285f4', background: 'none', border: 'none', cursor: 'pointer' }}>Sign out</button>
             </>
