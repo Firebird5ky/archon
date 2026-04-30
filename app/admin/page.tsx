@@ -283,7 +283,7 @@ export default function AdminPage() {
           <>
             <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>Tickets ({tickets.length})</h2>
             {tickets.length === 0 && <p style={{ color: 'var(--muted)', fontSize: '13px' }}>No tickets.</p>}
-            {tickets.map(t => <TicketCard key={t.id} ticket={t} onReply={replyTicket} adminName={isDeity ? 'archon_admin' : (adminMember?.username || 'admin')} />)}
+            {tickets.map(t => <TicketCard key={t.id} ticket={t} onReply={loadAll} supabase={supabase} adminName={isDeity ? 'archon_admin' : (adminMember?.username || 'admin')} />)}
           </>
         )}
 
@@ -409,35 +409,77 @@ function RequestCard({ request, onUpdate }) {
 
 
 // Add this component to the bottom of app/admin/page.tsx before the last closing line
-function TicketCard({ ticket, onReply, adminName }) {
-  const [reply, setReply] = useState(ticket.admin_reply || '')
+
+
+
+
+
+function TicketCard({ ticket, onReply, adminName, supabase }) {
+  const [messages, setMessages] = useState([])
+  const [reply, setReply] = useState('')
   const [status, setStatus] = useState(ticket.status)
   const STATUS_COLORS = { open: '#4285f4', 'in-progress': '#fbbc05', resolved: '#34a853', closed: '#9aa0a6' }
+
+  useEffect(() => { loadMessages() }, [ticket.id])
+
+  async function loadMessages() {
+    const { data } = await supabase.from('ticket_messages').select('*').eq('ticket_id', ticket.id).order('created_at')
+    setMessages(data || [])
+  }
+
+  async function sendReply() {
+    if (!reply.trim()) return
+    await supabase.from('ticket_messages').insert({
+      ticket_id: ticket.id, author_name: adminName, is_admin: true, body: reply.trim()
+    })
+    await supabase.from('tickets').update({ status, updated_at: new Date().toISOString() }).eq('id', ticket.id)
+    setReply('')
+    loadMessages()
+    onReply()
+  }
+
   const inp = { padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'arial, sans-serif', width: '100%' }
   const btn = (bg) => ({ padding: '6px 12px', background: bg, color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' })
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', marginBottom: '16px', overflow: 'hidden' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', gap: '8px', alignItems: 'center' }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>#{ticket.id} — {ticket.title}</span>
         <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: STATUS_COLORS[ticket.status] + '22', color: STATUS_COLORS[ticket.status], border: '1px solid ' + STATUS_COLORS[ticket.status] }}>{ticket.status}</span>
         <span style={{ fontSize: '11px', padding: '2px 8px', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--muted)' }}>{ticket.category}</span>
+        <span style={{ fontSize: '12px', color: 'var(--muted)', marginLeft: 'auto' }}>From: {ticket.members?.username} · {new Date(ticket.created_at).toLocaleDateString()}</span>
       </div>
-      <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>From: {ticket.members?.username} · {new Date(ticket.created_at).toLocaleDateString()}</div>
-      <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.6, marginBottom: '12px', padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>{ticket.body}</div>
-      <textarea value={reply} onChange={e => setReply(e.target.value)} placeholder="Write a reply..." style={{ ...inp, minHeight: '80px', resize: 'vertical', marginBottom: '8px' }} />
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
-          <option value="open">Open</option>
-          <option value="in-progress">In Progress</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
-        </select>
-        <button style={btn('#4285f4')} onClick={() => onReply(ticket.id, reply, status, adminName)}>Send Reply</button>
+
+      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+        {messages.map(m => (
+          <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.is_admin ? 'flex-start' : 'flex-end' }}>
+            <div style={{ maxWidth: '80%' }}>
+              <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '2px', textAlign: m.is_admin ? 'left' : 'right' }}>
+                {m.is_admin ? <span style={{ color: '#ea4335', fontWeight: 600 }}>Admin · {m.author_name}</span> : <span style={{ fontWeight: 600 }}>{m.author_name}</span>}
+              </div>
+              <div style={{ padding: '8px 12px', borderRadius: m.is_admin ? '4px 12px 12px 12px' : '12px 4px 12px 12px', background: m.is_admin ? 'rgba(234,67,53,0.08)' : 'rgba(66,133,244,0.08)', border: '1px solid ' + (m.is_admin ? 'rgba(234,67,53,0.2)' : 'rgba(66,133,244,0.2)'), fontSize: '13px', color: 'var(--text)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                {m.body}
+              </div>
+            </div>
+          </div>
+        ))}
+        {messages.length === 0 && <p style={{ fontSize: '13px', color: 'var(--muted)' }}>No messages yet.</p>}
+      </div>
+
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+        <textarea value={reply} onChange={e => setReply(e.target.value)} placeholder="Reply..." style={{ ...inp, minHeight: '60px', resize: 'none', flex: 1 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
+            <option value="open">Open</option>
+            <option value="in-progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <button style={btn('#4285f4')} onClick={sendReply}>Send</button>
+        </div>
       </div>
     </div>
   )
 }
-
 
 
