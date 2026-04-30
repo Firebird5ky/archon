@@ -542,6 +542,11 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+      <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', textAlign: 'right', fontSize: '11px' }}>
+        <a href="https://billing.hyperveilservers.com/#" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
+          Infrastructure by Hyperveil Servers
+        </a>
+      </div>
     </div>
   )
 }

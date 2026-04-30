@@ -3,22 +3,11 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export default function LandingPage() {
   const [stats, setStats] = useState({ factions: 0, members: 0, posts: 0 })
   const [recentPosts, setRecentPosts] = useState([])
   const supabase = createClient()
-  const router = useRouter()
-
-  useEffect(() => {
-    // Redirect logged in users to dashboard
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.push('/dashboard')
-    })
-    const local = typeof window !== 'undefined' ? localStorage.getItem('archon-member') : null
-    if (local) router.push('/dashboard')
-  }, [])
 
   useEffect(() => {
     async function load() {
@@ -108,8 +97,11 @@ export default function LandingPage() {
       )}
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', padding: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.15)', fontSize: '12px' }}>
-        ARCHON · The Faction Network
+      <div style={{ textAlign: 'center', padding: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.15)', fontSize: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+        <span>ARCHON · The Faction Network</span>
+        <a href="https://billing.hyperveilservers.com/#" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.25)', textDecoration: 'none', fontSize: '11px', border: '1px solid rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: '4px', transition: 'color 0.2s' }}>
+          Hosted infrastructure by Hyperveil Servers
+        </a>
       </div>
     </div>
   )
