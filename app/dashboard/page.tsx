@@ -15,7 +15,6 @@ const TIER_LIMITS = {
 
 const TIER_ORDER = ['free', 'bronze', 'silver', 'gold', 'platinum']
 
-const TIER_ORDER = ['free', 'bronze', 'silver', 'gold']
 
 export default function Dashboard() {
   const [query, setQuery] = useState('')
@@ -523,3 +522,4 @@ export default function Dashboard() {
     </div>
   )
 }
+
