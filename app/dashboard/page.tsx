@@ -6,11 +6,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 const TIER_LIMITS = {
-  free:   { posts: 3,  chars: 2000,  label: 'Free',   color: '#9aa0a6' },
-  bronze: { posts: 6,  chars: 4000,  label: 'Bronze',  color: '#cd7f32' },
-  silver: { posts: 12, chars: 8000,  label: 'Silver',  color: '#aaa9ad' },
-  gold:   { posts: 999,chars: 16000, label: 'Gold',    color: '#ffd700' },
+  free:     { posts: 3,  chars: 2000,  label: 'Free',     color: '#9aa0a6' },
+  bronze:   { posts: 6,  chars: 4000,  label: 'Bronze',   color: '#cd7f32' },
+  silver:   { posts: 12, chars: 8000,  label: 'Silver',   color: '#aaa9ad' },
+  gold:     { posts: 24, chars: 16000, label: 'Gold',     color: '#ffd700' },
+  platinum: { posts: 48, chars: 32000, label: 'Platinum', color: '#e5e4e2' },
 }
+
+const TIER_ORDER = ['free', 'bronze', 'silver', 'gold', 'platinum']
 
 const TIER_ORDER = ['free', 'bronze', 'silver', 'gold']
 
@@ -28,6 +31,12 @@ export default function Dashboard() {
   const [panelPass, setPanelPass] = useState('')
   const [panelMsg, setPanelMsg] = useState('')
   const [showGuide, setShowGuide] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterAuthor, setFilterAuthor] = useState('')
+  const [filterFaction, setFilterFaction] = useState('')
+  const [filterDate, setFilterDate] = useState('all')
+  const [filterType, setFilterType] = useState('all')
+  const [filterTier, setFilterTier] = useState('all')
   const [showPost, setShowPost] = useState(false)
   const [postBody, setPostBody] = useState('')
   const [postTitle, setPostTitle] = useState('')
@@ -73,34 +82,53 @@ export default function Dashboard() {
     setPosts(data || [])
   }
 
+  function getDateFilter(range) {
+    const now = new Date()
+    if (range === 'today') { const d = new Date(now); d.setHours(0,0,0,0); return d.toISOString() }
+    if (range === 'week') { const d = new Date(now); d.setDate(d.getDate()-7); return d.toISOString() }
+    if (range === 'month') { const d = new Date(now); d.setMonth(d.getMonth()-1); return d.toISOString() }
+    return null
+  }
+
   async function search(q, t) {
     setLoading(true)
     const res = []
 
-    if (t === 'all' || t === 'factions') {
+    const dateFrom = getDateFilter(filterDate)
+    const activeType = filterType !== 'all' ? filterType : t
+
+    if (activeType === 'all' || activeType === 'factions') {
       let fq = supabase.from('factions').select('*').eq('is_active', true)
       if (q) fq = fq.ilike('name', '%' + q + '%')
+      if (filterFaction) fq = fq.eq('name', filterFaction)
       const { data } = await fq.limit(8)
       data?.forEach(f => res.push({ type: 'faction', title: f.name + ' — Faction', path: ['factions', f.name], snippet: f.description || '[' + f.tag + ']', tags: [f.tag], href: '/f/' + f.name }))
     }
 
-    if (t === 'all' || t === 'members') {
+    if (activeType === 'all' || activeType === 'members') {
       let mq = supabase.from('members').select('*').eq('is_banned', false)
       if (q) mq = mq.ilike('username', '%' + q + '%')
+      if (filterAuthor) mq = mq.ilike('username', '%' + filterAuthor + '%')
       const { data } = await mq.limit(8)
       data?.forEach(m => res.push({ type: 'member', title: (m.display_name || m.username) + ' — Member', path: ['members', m.username], snippet: 'Tier: ' + m.tier + '.', tags: [m.tier], href: '/members/' + m.username }))
     }
 
-    if (t === 'all' || t === 'pages') {
+    if (activeType === 'all' || activeType === 'pages') {
       let pq = supabase.from('pages').select('*, factions(name)').eq('is_published', true)
       if (q) pq = pq.ilike('title', '%' + q + '%')
+      if (filterFaction) pq = pq.eq('factions.name', filterFaction)
+      if (dateFrom) pq = pq.gte('created_at', dateFrom)
       const { data } = await pq.limit(8)
       data?.forEach(p => res.push({ type: 'page', title: p.title, path: ['factions', p.factions?.name, p.slug].filter(Boolean), snippet: p.body.substring(0, 160), tags: [p.factions?.name].filter(Boolean), href: '/f/' + p.factions?.name + '/' + p.slug }))
     }
 
-    if (t === 'all' || t === 'posts') {
+    if (activeType === 'all' || activeType === 'posts') {
       let pq = supabase.from('posts').select('*, members(username), factions(name)').order('created_at', { ascending: false })
       if (q) pq = pq.or('title.ilike.%' + q + '%,body.ilike.%' + q + '%')
+      if (filterAuthor) pq = pq.ilike('members.username', '%' + filterAuthor + '%')
+      if (filterFaction) pq = pq.eq('faction_id', factions.find(f => f.name === filterFaction)?.id)
+      if (dateFrom) pq = pq.gte('created_at', dateFrom)
+      if (filterTier !== 'all') pq = pq.eq('visibility', filterTier)
       const { data } = await pq.limit(8)
       data?.forEach(p => res.push({ type: 'post', title: p.title || 'Untitled post', path: ['posts', p.members?.username].filter(Boolean), snippet: p.body.substring(0, 160) + (p.body.length > 160 ? '...' : ''), tags: [p.factions?.name].filter(Boolean), href: '/posts/' + p.id }))
     }
@@ -296,11 +324,53 @@ export default function Dashboard() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', padding: '0 24px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
         {['all', 'factions', 'members', 'pages', 'posts'].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: '10px 16px', fontSize: '13px', background: 'none', border: 'none', borderBottom: tab === t ? '3px solid #4285f4' : '3px solid transparent', color: tab === t ? '#4285f4' : 'var(--muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'arial, sans-serif' }}>{t}</button>
         ))}
+        {tab === 'all' && (
+          <button onClick={() => setShowFilters(!showFilters)} style={{ marginLeft: 'auto', fontSize: '12px', padding: '4px 12px', border: '1px solid var(--border)', borderRadius: '12px', background: showFilters ? '#4285f4' : 'none', color: showFilters ? '#fff' : 'var(--muted)', cursor: 'pointer', fontFamily: 'arial, sans-serif' }}>
+            {showFilters ? 'Hide Filters' : 'Filters'}
+          </button>
+        )}
       </div>
+
+      {showFilters && tab === 'all' && (
+        <div style={{ padding: '12px 24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            placeholder="Author"
+            value={filterAuthor}
+            onChange={e => setFilterAuthor(e.target.value)}
+            style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'arial, sans-serif', width: '120px' }}
+          />
+          <select value={filterFaction} onChange={e => setFilterFaction(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)' }}>
+            <option value="">All Factions</option>
+            {factions.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
+          </select>
+          <select value={filterDate} onChange={e => setFilterDate(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)' }}>
+            <option value="all">Any time</option>
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+          </select>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)' }}>
+            <option value="all">All types</option>
+            <option value="posts">Posts</option>
+            <option value="pages">Pages</option>
+            <option value="members">Members</option>
+            <option value="factions">Factions</option>
+          </select>
+          <select value={filterTier} onChange={e => setFilterTier(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)' }}>
+            <option value="all">All tiers</option>
+            {TIER_ORDER.slice(0, TIER_ORDER.indexOf(member?.tier || 'free') + 1).map(t => (
+              <option key={t} value={t}>{TIER_LIMITS[t]?.label}</option>
+            ))}
+          </select>
+          {(filterAuthor || filterFaction || filterDate !== 'all' || filterType !== 'all' || filterTier !== 'all') && (
+            <button onClick={() => { setFilterAuthor(''); setFilterFaction(''); setFilterDate('all'); setFilterType('all'); setFilterTier('all') }} style={{ fontSize: '12px', color: '#ea4335', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', padding: '16px 24px', gap: '32px' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -323,8 +393,8 @@ export default function Dashboard() {
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
                         <span style={{ fontSize: '12px', color: postBody.length > tier.chars ? '#ea4335' : 'var(--muted)' }}>{postBody.length}/{tier.chars}</span>
                         <select value={postVisibility} onChange={e => setPostVisibility(e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
-                          {TIER_ORDER.slice(0, TIER_ORDER.indexOf(member.tier) + 1).map(t => (
-                            <option key={t} value={t}>{TIER_LIMITS[t].label} visible</option>
+                          {['free','bronze','silver','gold','platinum'].slice(0, ['free','bronze','silver','gold','platinum'].indexOf(member.tier) + 1).map(t => (
+                            <option key={t} value={t}>{TIER_LIMITS[t]?.label} visible</option>
                           ))}
                         </select>
                         <select value={postFaction} onChange={e => setPostFaction(e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}>
