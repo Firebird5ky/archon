@@ -83,6 +83,18 @@ export default function AdminPage() {
     loadAll()
   }
 
+  async function deleteAccount(id, username) {
+    if (!confirm('Delete account for ' + username + '? Their posts will remain but the account will be removed.')) return
+    // Nullify author references in posts and comments first
+    await supabase.from('posts').update({ author_id: null }).eq('author_id', id)
+    await supabase.from('comments').update({ author_id: null }).eq('author_id', id)
+    await supabase.from('faction_members').delete().eq('member_id', id)
+    await supabase.from('rulers').delete().eq('member_id', id)
+    await supabase.from('member_achievements').delete().eq('member_id', id)
+    await supabase.from('members').delete().eq('id', id)
+    loadAll()
+  }
+
   async function deleteFaction(id) {
     if (!confirm('Delete?')) return
     await supabase.from('factions').delete().eq('id', id)
@@ -179,7 +191,7 @@ export default function AdminPage() {
                         <option value="free">Free</option>
                         <option value="bronze">Bronze</option>
                         <option value="silver">Silver</option>
-                        <option value="gold">Gold</option>`n                        <option value="platinum">Platinum</option>
+                        <option value="gold">Gold</option>
                       </select>
                     </td>
                     <td style={td}>
@@ -194,8 +206,9 @@ export default function AdminPage() {
                         <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{m.role}</span>
                       )}
                     </td>
-                    <td style={td}>
+                    <td style={td} style={{ display: 'flex', gap: '6px' }}>
                       <button style={btn(m.is_banned ? '#34a853' : '#ea4335')} onClick={() => banMember(m.id, !m.is_banned)}>{m.is_banned ? 'Unban' : 'Ban'}</button>
+                      <button style={btn('#000')} onClick={() => deleteAccount(m.id, m.username)}>Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -320,4 +333,3 @@ function RequestCard({ request, onUpdate }) {
     </div>
   )
 }
-
