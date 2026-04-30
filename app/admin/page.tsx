@@ -192,6 +192,7 @@ export default function AdminPage() {
                         <option value="bronze">Bronze</option>
                         <option value="silver">Silver</option>
                         <option value="gold">Gold</option>
+                        <option value="platinum">Platinum</option>
                       </select>
                     </td>
                     <td style={td}>
@@ -333,3 +334,4 @@ function RequestCard({ request, onUpdate }) {
     </div>
   )
 }
+
